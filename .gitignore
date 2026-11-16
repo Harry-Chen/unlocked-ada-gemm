@@ -1,0 +1,10 @@
+# build outputs
+*.o
+*.so
+*.sass
+__pycache__/
+# no NVIDIA binaries/firmware may ever be committed
+*.deb
+*.bin
+*.pkg.tar.zst
+NVIDIA-kernel-module-source-*
