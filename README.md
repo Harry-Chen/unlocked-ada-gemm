@@ -62,10 +62,29 @@ the tools. `results/` holds the raw sweep tables.
 ## Repo layout
 
 ```
-src/       the shim + all benchmark/probe sources (CUDA)
 docs/      REPORT.zh.md (full investigation, zh) · DEPLOYMENT.md (deployment guide)
 results/   sweep CSVs + CUTLASS result notes
 ```
+
+`src/` contents:
+
+| file | what it is |
+|---|---|
+| `cublaslt_autotune.hpp` | **the main deliverable**: header-only autotuning wrapper for `cublasLtMatmul` (drop-in; see its header comment) |
+| `autotune_demo.cu` | demo + validation for the shim (default vs tuned pick, numeric check) |
+| `cublaslt_sweep.cu` | full cuBLASLt sweep: times every heuristic candidate per (dtype, shape), decodes each algo's tile/stages/splitK |
+| `cublas_scan.cu` | single-shape algo enumerator (quick probe used for the NCU runs) |
+| `heur_probe.cu` | query-only heuristic probe — prints picks without running anything (used for the clock-invariance and cross-device tests) |
+| `gen_lt_names.py` | generates `lt_enum_names.h` (enum→name map) from the local `cublasLt.h` |
+| `cutlass_bench.cu` | fp16 CUTLASS tile/stages/swizzle sweep |
+| `cutlass_bf16_tf32.cu` | same sweep for bf16 and tf32 |
+| `cutlass_fp8_bench7.cu` | fp8 (E4M3) sweep, staged vs fast-accumulate, with built-in numeric validation |
+| `mma_smem_bench.cu` | SMEM-fed MMA sustained-rate microbench (operand-reuse sweep; pure PTX) |
+| `precision_probe.cu` | accumulator-precision probe: directed `1 + 2^-q` threshold scan + random-pattern statistics |
+| `tie_probe.cu` | RN-vs-RZ rounding tie-case probe |
+| `gemm_precision.cu` | GEMM-level precision vs an fp64 reference across K |
+| `p2p_test.cu` | P2P bandwidth/latency matrices |
+| `h2d_test.cu` | per-GPU host↔device bandwidth |
 
 ## Upstream projects this builds on
 
