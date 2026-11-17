@@ -69,6 +69,8 @@ NCU 实锤（fp16/fp8 8192³，GPU7，Nsight Compute）：
 | fp8 默认 pick | `sm89_xmma_gemm_..._tilesize64x64x64_stage4_warpsize2x2x1_tensor16x8x32_...` | 3.70ms（≈297 TF/s） | ~45% | ~94% |
 | fp8 库内最优 | `sm89_xmma_gemm_..._tilesize128x128x64_stage3_warpsize4x2x1_...` | 1.94ms（≈567 TF/s） | — | — |
 
+（"—" = 该次 NCU 只采集了 kernel 名与时长，未取 SpeedOfLight 计数；时长本身已足够说明问题。）
+
 同一个库里面就有快 50–100% 的 kernel，heuristic 只是没选中它们。
 
 ### 3.4 SASS 证据：错误配置的两种死法
@@ -272,6 +274,8 @@ FP8 明细（CUTLASS 2.x device API，e4m3 in / fp16 out，TN，指令 16x8x32 =
 | TB128x128x64 w64x64 st3 | staged → **寄存器溢出** | — | 85–90 | — |
 | TB128x256x64 w64x64 st3 swz4/5/6 | fastacc（K 大时降精度） | 581.3 | 591.2 | 597.4 |
 | cuBLAS 默认 pick（对照） | — | ~375 | ~292 | ~405 |
+
+（"—" = 该单元格无意义（对照行）或该形状未测 —— 寄存器溢出已证实后其余形状无需再测。）
 | cuBLAS 库内最优（对照） | — | 524.3 | 587.6 | 493.2–525.1 |
 
 ### 5.2.1 一般规律（从全部扫描数据归纳）
@@ -298,6 +302,10 @@ FP8 明细（CUTLASS 2.x device API，e4m3 in / fp16 out，TN，指令 16x8x32 =
 | tf32 | 128×128×32 / w64×64 / st3 / swz4 | — | 136.1* | 141.9 | 141.2 | 82–86% |
 | fp8 staged（精度安全） | 128×128×64 / w64×32 / st4 / swz4-5 | — | 501.4 | 505.4 | 507.0 | ~77% |
 | fp8 fastacc（降精度） | 128×256×64 / w64×64 / st3 / swz4-6 | — | 581.4 | 591.2 | 597.4 | ~90% |
+
+> 表中 "—" = 未测。2048³ 等小形状上各候选配置差异本来就很有限（规律 L5），
+> 需要精确数字时用 `src/cutlass_bench*.cu` 自测即可；本表聚焦于"配置怎么选"，
+> 该结论不依赖这些空格。
 
 *tf32 4096³ 的 128×256/st3 因 SMEM 超限不可用，表中为 st2/swz4 的值；warp K 必须等于 TBK。
 
